@@ -71,8 +71,8 @@ class ConsoleUI(threading.Thread):
                 userflags = ""
                 if user.isController():
                     userflags += "({}) ".format(getMessage("controller-userlist-userflag"))
-                if user.isReady():
-                    userflags += "({}) ".format(getMessage("ready-userlist-userflag"))
+                # SYNCPLAY FORK: Ready system removed - always show as ready
+                userflags += "({}) ".format(getMessage("ready-userlist-userflag"))
 
                 username = userflags + "*<{}>*".format(user.username) if user == currentUser else userflags + "<{}>".format(user.username)
                 if user.file:
@@ -188,7 +188,8 @@ class ConsoleUI(threading.Thread):
             controlpassword = command.group('parameter')
             self._syncplayClient.identifyAsController(controlpassword)
         elif command.group('command') in constants.COMMANDS_TOGGLE:
-            self._syncplayClient.toggleReady()
+            # SYNCPLAY FORK: Ready system removed - do nothing
+            self.showMessage("Ready system has been removed in this fork.")
         elif command.group('command') in constants.COMMANDS_QUEUE:
             filename = command.group('parameter')
             if filename is None:
@@ -232,18 +233,12 @@ class ConsoleUI(threading.Thread):
             self._syncplayClient.playlist.loadNextFileInPlaylist()
 
         elif command.group('command') in constants.COMMANDS_SETREADY:
-            try:
-                username = command.group('parameter')
-                self._syncplayClient.setOthersReadiness(username, True)
-            except:
-                pass
+            # SYNCPLAY FORK: Ready system removed - do nothing
+            self.showMessage("Ready system has been removed in this fork.")
 
         elif command.group('command') in constants.COMMANDS_SETNOTREADY:
-            try:
-                username = command.group('parameter')
-                self._syncplayClient.setOthersReadiness(username, False)
-            except:
-                pass
+            # SYNCPLAY FORK: Ready system removed - do nothing
+            self.showMessage("Ready system has been removed in this fork.")
 
         else:
             if self._tryAdvancedCommands(data):

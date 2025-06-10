@@ -288,16 +288,11 @@ class SyncplayClient(object):
         return lastRewindTime is not None and abs(time.time() - lastRewindTime) < recentRewindThreshold
 
     def _toggleReady(self, pauseChange, paused):
+        # SYNCPLAY FORK: Ready system removed - just handle pause/unpause normally
         if not self.userlist.currentUser.canControl():
             self._player.setPaused(self._globalPaused)
-            if not self.recentlyRewound() and not ((self._globalPaused == True) and not self._recentlyAdvanced()):
-                self.toggleReady(manuallyInitiated=True)
             self._playerPaused = self._globalPaused
             pauseChange = False
-            if self.userlist.currentUser.isReady():
-                self.ui.showMessage(getMessage("set-as-not-ready-notification"))
-            else:
-                self.ui.showMessage(getMessage("set-as-ready-notification"))
         elif self.seamlessMusicOveride():
             self.ui.showDebugMessage("Readiness toggle ignored due to seamless music override")
             self._player.setPaused(paused)
@@ -306,19 +301,7 @@ class SyncplayClient(object):
             self._player.setPaused(self._globalPaused)
             self._playerPaused = self._globalPaused
             pauseChange = False
-        elif not paused and not self.instaplayConditionsMet():
-            paused = True
-            self._player.setPaused(paused)
-            self._playerPaused = paused
-            self.changeReadyState(True, manuallyInitiated=True)
-            pauseChange = False
-            self.ui.showMessage(getMessage("ready-to-unpause-notification"))
-        else:
-            lastPausedDiff = time.time() - self.lastPausedOnLeaveTime if self.lastPausedOnLeaveTime else None
-            if lastPausedDiff is not None and lastPausedDiff < constants.LAST_PAUSED_DIFF_THRESHOLD:
-                self.lastPausedOnLeaveTime = None
-            else:
-                self.changeReadyState(not self.getPlayerPaused(), manuallyInitiated=False)
+        # Skip ready state changes - just handle normal play/pause
         return pauseChange
 
     def getLocalState(self):
@@ -1042,13 +1025,13 @@ class SyncplayClient(object):
 
     @requireServerFeature("readiness")
     def toggleReady(self, manuallyInitiated=True):
-        self._protocol.setReady(not self.userlist.currentUser.isReady(), manuallyInitiated)
+        # SYNCPLAY FORK: Ready system removed - do nothing
+        pass
 
     @requireServerFeature("readiness")
     def changeReadyState(self, newState, manuallyInitiated=True):
-        oldState = self.userlist.currentUser.isReady()
-        if newState != oldState:
-            self.toggleReady(manuallyInitiated)
+        # SYNCPLAY FORK: Ready system removed - do nothing
+        pass
 
     def setReady(self, username, isReady, manuallyInitiated=True, setBy=None):
         oldReadyState = self.userlist.isReady(username)
@@ -1323,15 +1306,18 @@ class SyncplayUser(object):
             return False
 
     def isReadyWithFile(self):
+        # SYNCPLAY FORK: Ready system removed - always return True
         if self.file is None:
             return None
-        return self.ready
+        return True
 
     def isReady(self):
-        return self.ready
+        # SYNCPLAY FORK: Ready system removed - always return True
+        return True
 
     def setReady(self, ready):
-        self.ready = ready
+        # SYNCPLAY FORK: Ready system removed - do nothing
+        pass
 
     def setFeatures(self, features):
         self._features = features
@@ -1476,74 +1462,35 @@ class SyncplayUserlist(object):
             user.setControllerStatus(True)
 
     def areAllRelevantUsersInRoomReady(self, requireSameFilenames=False):
-        if not self.currentUser.isReady():
-            return False
-        if self.currentUser.canControl():
-            return self.areAllUsersInRoomReady(requireSameFilenames)
-        else:
-            for user in self._users.values():
-                if user.room == self.currentUser.room and user.canControl():
-                    if user.isReadyWithFile() == False:
-                        return False
-                    elif (
-                            requireSameFilenames and
-                            (
-                                    self.currentUser.file is None
-                                    or user.file is None
-                                    or not utils.sameFilename(self.currentUser.file['name'], user.file['name'])
-                            )
-                    ):
-                        return False
+        # SYNCPLAY FORK: Ready system removed - always return True
         return True
 
     def areAllUsersInRoomReady(self, requireSameFilenames=False):
-        if not self.currentUser.isReady():
-            return False
-        for user in self._users.values():
-            if user.room == self.currentUser.room:
-                if user.isReadyWithFile() == False:
-                    return False
-                elif (
-                        requireSameFilenames and
-                        (
-                                self.currentUser.file is None
-                                or user.file is None
-                                or not utils.sameFilename(self.currentUser.file['name'], user.file['name'])
-                        )
-                ):
-                    return False
+        # SYNCPLAY FORK: Ready system removed - always return True
         return True
 
     def areAllOtherUsersInRoomReady(self):
-        for user in self._users.values():
-            if user.room == self.currentUser.room and user.isReadyWithFile() == False:
-                return False
+        # SYNCPLAY FORK: Ready system removed - always return True
         return True
 
     def readyUserCount(self):
-        readyCount = 0
-        if self.currentUser.isReady():
-            readyCount += 1
+        # SYNCPLAY FORK: Ready system removed - count all users in room
+        userCount = 1  # Current user
         for user in self._users.values():
-            if user.room == self.currentUser.room and user.isReadyWithFile():
-                readyCount += 1
-        return readyCount
+            if user.room == self.currentUser.room:
+                userCount += 1
+        return userCount
 
     def usersInRoomCount(self):
         userCount = 1
         for user in self._users.values():
-            if user.room == self.currentUser.room and user.isReadyWithFile():
+            if user.room == self.currentUser.room:
                 userCount += 1
         return userCount
 
     def usersInRoomNotReady(self):
-        notReady = []
-        if not self.currentUser.isReady():
-            notReady.append(self.currentUser.username)
-        for user in self._users.values():
-            if user.room == self.currentUser.room and user.isReadyWithFile() == False:
-                notReady.append(user.username)
-        return ", ".join(notReady)
+        # SYNCPLAY FORK: Ready system removed - return empty string (everyone is ready)
+        return ""
 
     def areAllFilesInRoomSame(self):
         if self.currentUser.file:
@@ -1583,29 +1530,16 @@ class SyncplayUserlist(object):
         return False
 
     def isReadyWithFile(self, username):
-        if self.currentUser.username == username:
-            return self.currentUser.isReadyWithFile()
-
-        for user in self._users.values():
-            if user.username == username:
-                return user.isReadyWithFile()
-        return None
+        # SYNCPLAY FORK: Ready system removed - always return True
+        return True
 
     def isReady(self, username):
-        if self.currentUser.username == username:
-            return self.currentUser.isReady()
-
-        for user in self._users.values():
-            if user.username == username:
-                return user.isReady()
-        return None
+        # SYNCPLAY FORK: Ready system removed - always return True
+        return True
 
     def setReady(self, username, isReady):
-        if self.currentUser.username == username:
-            self.currentUser.setReady(isReady)
-        elif username in self._users:
-            self._users[username].setReady(isReady)
-        self._client.autoplayCheck()
+        # SYNCPLAY FORK: Ready system removed - do nothing
+        pass
 
     def userListChange(self, room=None):
         if room is not None and self.isRoomSame(room):

@@ -86,7 +86,8 @@ class UserlistItemDelegate(QtWidgets.QStyledItemDelegate):
             tickIconQPixmap = QtGui.QPixmap(resourcespath + "tick.png")
             crossIconQPixmap = QtGui.QPixmap(resourcespath + "cross.png")
             roomController = currentQAbstractItemModel.data(itemQModelIndex, Qt.UserRole + constants.USERITEM_CONTROLLER_ROLE)
-            userReady = currentQAbstractItemModel.data(itemQModelIndex, Qt.UserRole + constants.USERITEM_READY_ROLE)
+            # SYNCPLAY FORK: Ready system removed - always show as ready
+            userReady = True
             isUserRow = indexQModelIndex.parent() != indexQModelIndex.parent().parent()
             bkgColor = self.view.palette().color(QtGui.QPalette.Base)
             if isUserRow and (isMacOS() or isLinux()):
@@ -652,7 +653,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     isReadyWithFile = None
                 useritem.setData(isController, Qt.UserRole + constants.USERITEM_CONTROLLER_ROLE)
-                useritem.setData(isReadyWithFile, Qt.UserRole + constants.USERITEM_READY_ROLE)
+                # SYNCPLAY FORK: Ready system removed - always set as ready
+                useritem.setData(True, Qt.UserRole + constants.USERITEM_READY_ROLE)
                 if user.file:
                     filesizeitem = QtGui.QStandardItem(formatSize(user.file['size']))
                     filedurationitem = QtGui.QStandardItem("({})".format(formatTime(user.file['duration'])))
@@ -863,12 +865,8 @@ class MainWindow(QtWidgets.QMainWindow):
             pass
 
     def updateReadyState(self, newState):
-        oldState = self.readyPushButton.isChecked()
-        if newState != oldState and newState is not None:
-            self.readyPushButton.blockSignals(True)
-            self.readyPushButton.setChecked(newState)
-            self.readyPushButton.blockSignals(False)
-        self.updateReadyIcon()
+        # SYNCPLAY FORK: Ready system removed - hide ready button
+        self.readyPushButton.setVisible(False)
 
     @needsClient
     def playlistItemClicked(self, item):
@@ -1613,6 +1611,8 @@ class MainWindow(QtWidgets.QMainWindow):
         window.readyPushButton.setFont(readyFont)
         window.readyPushButton.setStyleSheet(constants.STYLE_READY_PUSHBUTTON)
         window.readyPushButton.setToolTip(getMessage("ready-tooltip"))
+        # SYNCPLAY FORK: Ready system removed - hide ready button
+        window.readyPushButton.setVisible(False)
         window.listLayout.addWidget(window.readyPushButton, Qt.AlignRight)
         if isMacOS(): window.listLayout.setContentsMargins(0, 0, 0, 10)
 
@@ -1859,11 +1859,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self._syncplayClient.getUserList()
 
     def changeReadyState(self):
-        self.updateReadyIcon()
-        if self._syncplayClient:
-            self._syncplayClient.changeReadyState(self.readyPushButton.isChecked())
-        else:
-            self.showDebugMessage("Tried to change ready state too soon.")
+        # SYNCPLAY FORK: Ready system removed - do nothing
+        pass
 
     def changePlaylistEnabledState(self):
         self._syncplayClient.changePlaylistEnabledState(self.playlistGroup.isChecked())

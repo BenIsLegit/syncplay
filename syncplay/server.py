@@ -747,16 +747,16 @@ class Watcher(object):
             self._askForStateUpdate(True, True)
 
     def setReady(self, ready):
-        self._ready = ready
+        # SYNCPLAY FORK: Ready system removed - do nothing
+        pass
 
     def getFeatures(self):
         features = self._connector.getFeatures()
         return features
 
     def isReady(self):
-        if self._server.disableReady:
-            return None
-        return self._ready
+        # SYNCPLAY FORK: Ready system removed - always return True
+        return True
 
     def getRoom(self):
         return self._room
